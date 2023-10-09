@@ -1,7 +1,10 @@
-package evidenciavydavkovmysql;
+package sk.tmconsulting.evidenciavydavkovswingmysql;
 import java.sql.SQLException;
 import evidenciavydavkovmysql.service.*;
 import evidenciavydavkovmysql.model.*;
+import sk.tmconsulting.evidenciavydavkovswingmysql.model.Kategoria;
+import sk.tmconsulting.evidenciavydavkovswingmysql.model.Vydavok;
+import sk.tmconsulting.evidenciavydavkovswingmysql.service.VydavokService;
 
 
 public class Main {

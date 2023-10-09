@@ -1,7 +1,9 @@
-package evidenciavydavkovmysql.service;
+package sk.tmconsulting.evidenciavydavkovswingmysql.service;
 
 import evidenciavydavkovmysql.model.*;
 import evidenciavydavkovmysql.service.*;
+import sk.tmconsulting.evidenciavydavkovswingmysql.model.Kategoria;
+import sk.tmconsulting.evidenciavydavkovswingmysql.model.Vydavok;
 
 import java.sql.*;
 import java.util.ArrayList;

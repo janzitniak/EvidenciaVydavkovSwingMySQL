@@ -1,4 +1,4 @@
-package evidenciavydavkovmysql.service;
+package sk.tmconsulting.evidenciavydavkovswingmysql.service;
 
 import java.sql.SQLException;
 

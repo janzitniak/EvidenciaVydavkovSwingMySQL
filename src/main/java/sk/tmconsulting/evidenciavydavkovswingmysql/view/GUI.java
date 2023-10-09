@@ -1,4 +1,4 @@
-package evidenciavydavkovmysql.view;
+package sk.tmconsulting.evidenciavydavkovswingmysql.view;
 
 import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
