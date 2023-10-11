@@ -23,7 +23,6 @@ public class GUI {
 
     public GUI() throws SQLException {
         vydavokServiceObjekt = new VydavokService();
-        vydavokServiceObjekt.init();
         zobrazHlavneOkno();
     }
 

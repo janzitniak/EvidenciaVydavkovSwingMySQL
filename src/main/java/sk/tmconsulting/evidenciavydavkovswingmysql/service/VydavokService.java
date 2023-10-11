@@ -11,14 +11,19 @@ public class VydavokService implements IVydavokService, IDatabaseService {
 
     private Connection conn; // Platnost premennej conn, resp. databazovej konekcie v ramci celej triedy
 
+    public VydavokService() throws SQLException {
+        init();
+    }
+
     @Override
     public void init() throws SQLException {
         String url = "jdbc:mysql://localhost:3306/vydavky_db";
         String username = "root";
         String password = "password";
         System.out.println("Connecting database...");
-
-        conn = DriverManager.getConnection(url, username, password);
+        // Singleton pattern
+        if (conn == null)
+            conn = DriverManager.getConnection(url, username, password);
         System.out.println("Database connected!");
     }
 
