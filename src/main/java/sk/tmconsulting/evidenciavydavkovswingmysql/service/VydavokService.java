@@ -1,7 +1,5 @@
 package sk.tmconsulting.evidenciavydavkovswingmysql.service;
 
-import evidenciavydavkovmysql.model.*;
-import evidenciavydavkovmysql.service.*;
 import sk.tmconsulting.evidenciavydavkovswingmysql.model.Kategoria;
 import sk.tmconsulting.evidenciavydavkovswingmysql.model.Vydavok;
 
@@ -77,6 +75,7 @@ public class VydavokService implements IVydavokService, IDatabaseService {
         preparedStmt.setInt(6, id);
 
         // execute the java preparedstatement
+        System.out.println(preparedStmt);
         preparedStmt.executeUpdate();
         preparedStmt.close();
     }
@@ -95,13 +94,21 @@ public class VydavokService implements IVydavokService, IDatabaseService {
         ArrayList<Vydavok> vydavky = new ArrayList<>();
         // our SQL SELECT query.
         // if you only need a few columns, specify them by name instead of using "*"
-        String query = "SELECT * FROM vydavok";
+        String query = "SELECT id, nazov, cena, datum, kategoria, poznamka FROM vydavok";
         // create the java statement
         PreparedStatement preparedStmt = conn.prepareStatement(query);
         // execute the query, and get a java resultset
         ResultSet rs = preparedStmt.executeQuery();
         // iterate through the java resultset
         while (rs.next()) {
+            System.out.println(                    new Vydavok(
+                    rs.getInt("id"),
+                    rs.getString("nazov"),
+                    rs.getDouble("cena"),
+                    rs.getDate("datum"),
+                    Kategoria.valueOf(rs.getString("kategoria")),
+                    rs.getString("poznamka")
+            ));
             vydavky.add(
                     new Vydavok(
                             rs.getInt("id"),
@@ -113,6 +120,7 @@ public class VydavokService implements IVydavokService, IDatabaseService {
                     )
             );
         }
+        System.out.println(preparedStmt);
         preparedStmt.close();
         return vydavky;
     }

@@ -77,13 +77,6 @@ public class Vydavok {
 
     @Override
     public String toString() {
-        return "Vydavok{" +
-                "id=" + id +
-                ", nazov='" + nazov + '\'' +
-                ", cena=" + cena +
-                ", datum=" + datum +
-                ", kategoria=" + kategoria +
-                ", poznamka='" + poznamka + '\'' +
-                '}';
+        return nazov + " " + cena + " " + kategoria + " " + datum + " ";
     }
 }

@@ -3,6 +3,9 @@ package sk.tmconsulting.evidenciavydavkovswingmysql.view;
 import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
+import sk.tmconsulting.evidenciavydavkovswingmysql.model.Kategoria;
+import sk.tmconsulting.evidenciavydavkovswingmysql.model.Vydavok;
+import sk.tmconsulting.evidenciavydavkovswingmysql.service.VydavokService;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -10,15 +13,21 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class GUI {
     private int indexVydavku;
+    private VydavokService vydavokServiceObjekt;
 
-    public GUI() {
+    public GUI() throws SQLException {
+        vydavokServiceObjekt = new VydavokService();
+        vydavokServiceObjekt.init();
         zobrazHlavneOkno();
     }
 
-    public void zobrazHlavneOkno() {
+    public void zobrazHlavneOkno() throws SQLException {
         JFrame hlavneOkno = new JFrame("Evidencia výdavkov by Ján Žitniak");
         hlavneOkno.setMinimumSize(new Dimension(800, 600));
         hlavneOkno.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Ked kliknem na X na okne (cize vo hlavneOkno) tak sa zatvori standardne
@@ -58,11 +67,11 @@ public class GUI {
         lblKategorie.setBounds(85, 125, 100, 20); // x, y, sirka, vyska
         panel.add(lblKategorie);
 
-        String[] kategorie = { "POTRAVINY", "PHM", "INÉ", "OBLEČENIE", "KONÍČKY" };
+        //String[] kategorie = { "POTRAVINY", "PHM", "INÉ", "OBLEČENIE", "KONÍČKY" };
         //Create the combo box, select item at index 4.
         //Indices start at 0, so 4 specifies the pig.
-        JComboBox cmbKategorie = new JComboBox(kategorie);
-        cmbKategorie.setSelectedIndex(4);
+        JComboBox cmbKategorie = new JComboBox(Kategoria.values());
+
         cmbKategorie.setBounds(190, 120, 200, 30); // x, y, sirka, vyska
         panel.add(cmbKategorie);
 
@@ -74,7 +83,7 @@ public class GUI {
 
         UtilDateModel model = new UtilDateModel();
         JDatePanelImpl datePanel = new JDatePanelImpl(model);
-        JDatePickerImpl datePicker = new JDatePickerImpl(datePanel);
+        JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter()); // TODO Prerobit to na SK format
         datePicker.setBounds(190, 150, 200, 30);
 
         panel.add(datePicker);
@@ -86,17 +95,36 @@ public class GUI {
         panel.add(lblZoznamVydavkov);
 
         // Zoznam vydavkov, list
-        DefaultListModel modelZoznamu = new DefaultListModel<>(); // Vytvorenie modelu zoznamu
+        DefaultListModel modelZoznamu = new DefaultListModel<Vydavok>(); // Vytvorenie modelu zoznamu
         JList lstZoznamVydavkov = new JList(modelZoznamu);
         // Pridanie predvyplnenych udajov
-        modelZoznamu.addElement("Chlieb 2.3 POTRAVINY 27.9.2023");
-        modelZoznamu.addElement("Rožky 1 POTRAVINY 23.9.2023");
+/*        modelZoznamu.addElement("Chlieb 2.3 POTRAVINY 27.9.2023");
+        modelZoznamu.addElement("Rožky 1 POTRAVINY 23.9.2023");*/
+
+        // Naplname data z MySQL databazy
+        VydavokService vydavokService = new VydavokService();
+        vydavokService.init();
+        ArrayList<Vydavok> vsetkyVydavky = vydavokService.vyberVsetky();
+        // TODO Preklopit vsetkyVydavky z ArrayList-u do formy Chlieb 2.3 POTRAVINY 27.9.2023
+        for (Vydavok konkretnyVydavok:vsetkyVydavky)
+            modelZoznamu.addElement(konkretnyVydavok);
+
+
+        //vydavokService.vytvor((Vydavok) modelZoznamu.getElementAt(0));
+
+
+
         lstZoznamVydavkov.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
                     try {
                         indexVydavku = lstZoznamVydavkov.getSelectedIndex();
+                        if (indexVydavku < 0) { // Problem pri odstranovani zaznamu sa indexVydavku nastavi na -1, testujeme to
+                            indexVydavku = lstZoznamVydavkov.getLastVisibleIndex(); // indexVydavku nastavime na posledny viditelny zaznam
+                            lstZoznamVydavkov.setSelectedIndex(indexVydavku); // A musime oznacit posledne viditelny zaznam aj v jList-e
+                        }
+                        //System.out.println("indexVydavku ešte pred vyplnením položiek: " + indexVydavku);
                         vyplnPolozky(modelZoznamu, txfNazovVydavku, txfCenaVydavku, cmbKategorie, datePicker);
                     } catch (NullPointerException e1) {
                         // TODO Spracovat
@@ -143,7 +171,12 @@ public class GUI {
         btnOdstranZaznam.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // TODO Po kliknuti na tlacidlo musime doprogramovat ...
+                Vydavok aktualnyVydavok = (Vydavok)modelZoznamu.getElementAt(indexVydavku);
+                try {
+                    vydavokServiceObjekt.odstran(aktualnyVydavok.getId());
+                } catch (SQLException ex) {
+                    throw new RuntimeException(ex);
+                }
                 modelZoznamu.remove(indexVydavku);
             }
         });
@@ -208,11 +241,11 @@ public class GUI {
         lblKategorie.setBounds(x, y + 70, 100, 20); // x, y, sirka, vyska
         panel.add(lblKategorie);
 
-        String[] kategorie = { "POTRAVINY", "PHM", "INÉ", "OBLEČENIE", "KONÍČKY" };
+        //String[] kategorie = { "POTRAVINY", "PHM", "INÉ", "OBLEČENIE", "KONÍČKY" };
         //Create the combo box, select item at index 4.
         //Indices start at 0, so 4 specifies the pig.
-        JComboBox cmbKategorie = new JComboBox(kategorie);
-        cmbKategorie.setSelectedIndex(4);
+        JComboBox cmbKategorie = new JComboBox(Kategoria.values());
+
         cmbKategorie.setBounds(x + 105, y + 65, 200, 30); // x, y, sirka, vyska
         panel.add(cmbKategorie);
 
@@ -224,7 +257,7 @@ public class GUI {
 
         UtilDateModel model = new UtilDateModel();
         JDatePanelImpl datePanel = new JDatePanelImpl(model);
-        JDatePickerImpl datePicker = new JDatePickerImpl(datePanel);
+        JDatePickerImpl datePicker = new JDatePickerImpl(datePanel, new DateLabelFormatter()); // TODO Prerobit to na SK format
         datePicker.setBounds(x + 105, y + 100, 200, 30);
 
         panel.add(datePicker);
@@ -238,10 +271,35 @@ public class GUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (novyZaznam) {
-                    modelZoznamu.addElement(txfNazovVydavku.getText() + " " + txfCenaVydavku.getText() + " " + cmbKategorie.getSelectedItem() + " " + datePicker.getJFormattedTextField().getText().replace(" ", ""));
+                    Vydavok novyVydavok = new Vydavok(
+                            txfNazovVydavku.getText(),
+                            Double.parseDouble(txfCenaVydavku.getText()),
+                            Date.valueOf(datePicker.getJFormattedTextField().getText()),
+                            Kategoria.valueOf(cmbKategorie.getSelectedItem().toString()), ""
+                    );
+                    modelZoznamu.addElement(novyVydavok);
+                    try {
+                        vydavokServiceObjekt.vytvor(novyVydavok);
+                    } catch (SQLException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 } else {
-                    // TODO naplnime aktualny zaznam upravenymi hodnotami
-                    modelZoznamu.setElementAt(txfNazovVydavku.getText() + " " + txfCenaVydavku.getText() + " " + cmbKategorie.getSelectedItem() + " " + datePicker.getJFormattedTextField().getText().replace(" ", ""), indexVydavku);
+                    Vydavok aktualnyVydavok = (Vydavok)modelZoznamu.getElementAt(indexVydavku);
+                    try {
+                        modelZoznamu.setElementAt(
+                                new Vydavok(
+                                        txfNazovVydavku.getText(),
+                                        Double.parseDouble(txfCenaVydavku.getText()),
+                                        Date.valueOf(datePicker.getJFormattedTextField().getText()),
+                                        Kategoria.valueOf(cmbKategorie.getSelectedItem().toString()), ""
+                                ), indexVydavku
+                        );
+                        Vydavok vybranyVydavok = (Vydavok) modelZoznamu.getElementAt(indexVydavku);
+                        vydavokServiceObjekt.uprav(vybranyVydavok, aktualnyVydavok.getId());
+
+                    } catch (SQLException ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
                 jDialog.dispose();
             }
@@ -268,7 +326,7 @@ public class GUI {
         // Ukazka dat: Chlieb 2.3 POTRAVINY 27.9.2023
         txfNazovVydavku.setText(jednotliveUdajeVydavku[0]);
         txfCenaVydavku.setText(jednotliveUdajeVydavku[1]);
-        cmbKategorie.setSelectedItem(jednotliveUdajeVydavku[2]);
+        cmbKategorie.setSelectedItem(Kategoria.valueOf(jednotliveUdajeVydavku[2]));
         datePicker.getJFormattedTextField().setText(jednotliveUdajeVydavku[3]);
     }
 }
